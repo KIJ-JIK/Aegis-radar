@@ -1,0 +1,12 @@
+[
+  {
+    "id": "heal_1787054919812",
+    "timestamp": "2026-08-18T12:08:39.812Z",
+    "collectorId": "c_demo_aegis_001",
+    "triggerReason": "Target site layout changed. Broken fields detected: Item #1 missing required fields: [title, link, date, category]. Re-index DOM and extract title, link, date, and category correctly.",
+    "repairStrategy": "Bright Data Scraper Studio AI healed broken CSS selectors (.notice-title -> article h2 a)",
+    "status": "HEALED_APPROVED",
+    "details": "Repaired 4 field mappings. Extracted 100% compliant JSON output.",
+    "autoApproved": true
+  }
+]

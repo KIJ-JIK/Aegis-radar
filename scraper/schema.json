@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PublicNotificationNotice",
+  "type": "object",
+  "required": ["title", "link", "date", "category"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Headline or notice title"
+    },
+    "link": {
+      "type": "string",
+      "format": "uri",
+      "description": "Full URL to official notice or document"
+    },
+    "date": {
+      "type": "string",
+      "description": "Publication or effective date of notice"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category or topic tag (e.g. Launch, Security, General)"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief notice summary"
+    },
+    "reference_id": {
+      "type": "string",
+      "description": "Unique identifier or reference code"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "aegis-scrapeverse",
+  "version": "1.0.0",
+  "description": "Aegis - Self-Healing Notification Radar powered by Bright Data Scraper Studio & Gemini AI",
+  "main": "agents/pipeline.js",
+  "scripts": {
+    "start": "node agents/pipeline.js",
+    "scraper": "node agents/scraper-agent.js",
+    "monitor": "node agents/health-monitor.js",
+    "insight": "node agents/insight-agent.js",
+    "notify": "node agents/notifier-agent.js",
+    "dev:dashboard": "cd dashboard && npm run dev"
+  },
+  "keywords": [
+    "bright-data",
+    "scraper-studio",
+    "self-healing",
+    "gemini-ai",
+    "notification-radar"
+  ],
+  "author": "Solo Builder",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "latest",
+    "dotenv": "^16.4.5"
+  }
+}

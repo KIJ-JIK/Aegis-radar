@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Sign in to console",
+    "link": "https://console.aws.amazon.com/console/home/?nc2=h_si&amp;src=header-signin",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"Sign in to console...\"",
+    "reference_id": "LIVE-1787328403863-1"
+  },
+  {
+    "title": "re:Invent 2026\n                      \n                       The session catalog is live. Explore what's waiting for you",
+    "link": "https://aws.amazon.com/events/reinvent/?nc2=h_dsc_ex_s1",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"re:Invent 2026\n                      \n                       The session catalog is live. ...\"",
+    "reference_id": "LIVE-1787328403863-2"
+  },
+  {
+    "title": "Customer Stories\n                      \n                       See how customers innovate with AWS data &amp; AI",
+    "link": "https://aws.amazon.com/data/customer-stories/?nc2=h_dsc_ex_s2",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"Customer Stories\n                      \n                       See how customers innovate ...\"",
+    "reference_id": "LIVE-1787328403863-3"
+  },
+  {
+    "title": "Independent Software Vendors\n                      \n                       AI for software &amp; tech: build, scale, and monetize",
+    "link": "https://aws.amazon.com/isv/?nc2=h_dsc_ex_s3",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"Independent Software Vendors\n                      \n                       AI for software...\"",
+    "reference_id": "LIVE-1787328403863-4"
+  },
+  {
+    "title": "AI for Small Businesses\n                         \n                          Solutions designed for your business. Delivered by AWS Partners",
+    "link": "https://aws.amazon.com/smart-business/solutions/artificial-intelligence-small-medium-business/?nc2=h_dsc_ex_s4",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"AI for Small Businesses\n                         \n                          Solutions desi...\"",
+    "reference_id": "LIVE-1787328403863-5"
+  },
+  {
+    "title": "Agent Toolkit\n                         \n                          Give AI coding agents up-to-date docs and AWS resource access",
+    "link": "https://aws.amazon.com/products/developer-tools/agent-toolkit-for-aws/?nc2=h_dsc_ex_s5",
+    "date": "2026-08-21",
+    "category": "Public Announcement",
+    "summary": "Live extracted notice from aws.amazon.com: \"Agent Toolkit\n                         \n                          Give AI coding agents up...\"",
+    "reference_id": "LIVE-1787328403863-6"
+  }
+]

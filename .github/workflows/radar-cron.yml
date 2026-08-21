@@ -1,0 +1,41 @@
+name: Aegis Self-Healing Radar Cron
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-radar-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+          npm install -g @brightdata/cli
+
+      - name: Run Aegis Pipeline & Self-Heal Loop
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_COLLECTOR_ID: ${{ secrets.BRIGHTDATA_COLLECTOR_ID }}
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: node agents/pipeline.js
+
+      - name: Commit State & Heal Log Updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add data/ sample-output/
+          git diff-index --quiet HEAD || git commit -m "chore(radar): automated dataset update & self-heal log [skip ci]"
+          git push

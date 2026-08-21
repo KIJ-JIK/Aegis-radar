@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+dashboard/node_modules/
+
+# Next.js Build Output
+dashboard/.next/
+dashboard/out/
+
+# Environment Variables & Secrets (NEVER COMMIT SECRETS)
+.env
+.env.local
+.env.production
+
+# Logs & OS Files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
