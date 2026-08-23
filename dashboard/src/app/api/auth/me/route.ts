@@ -12,21 +12,20 @@ export async function GET(req: Request) {
       });
     }
 
-    const dbUser = await getUserById(sessionUser.id);
-    if (!dbUser) {
-      return NextResponse.json({
-        authenticated: false,
-        user: null
-      });
+    let dbUser = null;
+    try {
+      dbUser = await getUserById(sessionUser.id);
+    } catch (err) {
+      console.warn('[Me Route] DB lookup warning:', err);
     }
 
     return NextResponse.json({
       authenticated: true,
       user: {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        createdAt: dbUser.createdAt
+        id: dbUser?.id || sessionUser.id,
+        name: dbUser?.name || sessionUser.name || sessionUser.email.split('@')[0],
+        email: dbUser?.email || sessionUser.email,
+        createdAt: dbUser?.createdAt || new Date().toISOString()
       }
     });
   } catch (error: any) {

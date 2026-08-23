@@ -16,68 +16,64 @@ export async function POST(req: Request) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    let authUserId = '';
+    let authUserName = '';
 
-    // 1. If Supabase Auth is configured, login via Supabase
+    // 1. If Supabase Auth is configured, attempt login via Supabase
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabaseServerClient();
-      if (supabase) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password
-        });
+      try {
+        const supabase = await getSupabaseServerClient();
+        if (supabase) {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password
+          });
 
-        if (error) {
-          return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 401 }
-          );
-        }
-
-        const supabaseUser = data.user;
-        const name = supabaseUser?.user_metadata?.name || supabaseUser?.user_metadata?.full_name || normalizedEmail.split('@')[0];
-
-        return NextResponse.json({
-          success: true,
-          message: 'Logged in successfully via Supabase Auth!',
-          user: {
-            id: supabaseUser?.id || '',
-            name,
-            email: normalizedEmail
+          if (!error && data?.user) {
+            authUserId = data.user.id;
+            authUserName = data.user.user_metadata?.name || data.user.user_metadata?.full_name || normalizedEmail.split('@')[0];
           }
-        });
+        }
+      } catch (supabaseErr) {
+        console.warn('[Login] Supabase signIn warning:', supabaseErr);
       }
     }
 
-    // 2. Fallback to built-in auth for offline development
-    const user = await getUserByEmail(normalizedEmail);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid email or password.' },
-        { status: 401 }
-      );
-    }
+    // 2. If Supabase succeeded or fallback to database lookup
+    if (!authUserId) {
+      const user = await getUserByEmail(normalizedEmail);
+      if (!user) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid email or password.' },
+          { status: 401 }
+        );
+      }
 
-    const isValid = await comparePassword(password, user.passwordHash);
-    if (!isValid) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid email or password.' },
-        { status: 401 }
-      );
+      const isValid = await comparePassword(password, user.passwordHash);
+      if (!isValid) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid email or password.' },
+          { status: 401 }
+        );
+      }
+
+      authUserId = user.id;
+      authUserName = user.name || normalizedEmail.split('@')[0];
     }
 
     const token = signToken({
-      id: user.id,
-      name: user.name,
-      email: user.email
+      id: authUserId,
+      name: authUserName,
+      email: normalizedEmail
     });
 
     const response = NextResponse.json({
       success: true,
       message: 'Logged in successfully!',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
+        id: authUserId,
+        name: authUserName,
+        email: normalizedEmail
       },
       token
     });

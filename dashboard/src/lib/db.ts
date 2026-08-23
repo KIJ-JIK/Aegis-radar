@@ -172,9 +172,9 @@ export async function getUserById(id: string): Promise<User | null> {
   return users.find(u => u.id === id) || null;
 }
 
-export async function createUser(data: { name: string; email: string; passwordHash: string }): Promise<User> {
+export async function createUser(data: { id?: string; name: string; email: string; passwordHash: string }): Promise<User> {
   const normalizedEmail = data.email.toLowerCase().trim();
-  const id = crypto.randomUUID();
+  const id = data.id || crypto.randomUUID();
   const now = new Date().toISOString();
 
   const newUser: User = {

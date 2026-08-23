@@ -25,44 +25,36 @@ export async function POST(req: Request) {
     const normalizedEmail = email.toLowerCase().trim();
     const displayName = name && name.trim() ? name.trim() : normalizedEmail.split('@')[0];
 
-    // 1. If Supabase Auth is configured, register via Supabase Auth
+    let userId = '';
+
+    // 1. Supabase Auth registration
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabaseServerClient();
-      if (supabase) {
-        const { data, error } = await supabase.auth.signUp({
-          email: normalizedEmail,
-          password,
-          options: {
-            data: {
-              name: displayName,
-              full_name: displayName
+      try {
+        const supabase = await getSupabaseServerClient();
+        if (supabase) {
+          const { data, error } = await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: {
+              data: {
+                name: displayName,
+                full_name: displayName
+              }
             }
-          }
-        });
+          });
 
-        if (error) {
-          return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 400 }
-          );
+          if (!error && data?.user) {
+            userId = data.user.id;
+          }
         }
-
-        const supabaseUser = data.user;
-        return NextResponse.json({
-          success: true,
-          message: 'Account registered with Supabase Auth!',
-          user: {
-            id: supabaseUser?.id || '',
-            name: displayName,
-            email: normalizedEmail
-          }
-        });
+      } catch (supabaseErr) {
+        console.warn('[Register] Supabase signUp warning:', supabaseErr);
       }
     }
 
-    // 2. Fallback to built-in auth for offline development
+    // 2. Check and store in MongoDB / local DB
     const existing = await getUserByEmail(normalizedEmail);
-    if (existing) {
+    if (existing && !userId) {
       return NextResponse.json(
         { success: false, error: 'An account with this email already exists. Please log in instead.' },
         { status: 409 }
@@ -70,25 +62,29 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hashPassword(password);
-    const user = await createUser({
-      name: displayName,
-      email: normalizedEmail,
-      passwordHash
-    });
+    let user = existing;
+    if (!user) {
+      user = await createUser({
+        id: userId || undefined,
+        name: displayName,
+        email: normalizedEmail,
+        passwordHash
+      });
+    }
 
     const token = signToken({
-      id: user.id,
-      name: user.name,
-      email: user.email
+      id: user.id || userId,
+      name: user.name || displayName,
+      email: user.email || normalizedEmail
     });
 
     const response = NextResponse.json({
       success: true,
       message: 'Account created successfully!',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
+        id: user.id || userId,
+        name: user.name || displayName,
+        email: user.email || normalizedEmail
       },
       token
     });
