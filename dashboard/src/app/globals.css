@@ -95,3 +95,14 @@ body {
   background-color: #22c55e;
   color: #000000;
 }
+
+/* Hide Netlify Drawer & Collaborative Feedback Widgets */
+netlify-drawer,
+#netlify-drawer-container,
+[data-netlify-deploy-id],
+iframe[src*="netlify"],
+.netlify-feedback-badge {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
