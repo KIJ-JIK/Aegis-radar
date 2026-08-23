@@ -203,6 +203,10 @@ export default function AegisDashboard() {
         if (data.domains && data.domains.length > 0) {
           setDomains(data.domains);
         }
+        // Reset active filter to ALL so newly scraped domain is immediately visible in feed
+        setFilterDomain('ALL');
+        setSearchTerm('');
+        
         if (data.userHistoryCount !== undefined) {
           setSavedCount(data.userHistoryCount);
         } else if (!data.isGuest) {

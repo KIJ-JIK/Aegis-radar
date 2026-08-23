@@ -112,14 +112,6 @@ export async function GET(req: Request) {
 
       userNotices.sort((a, b) => new Date(b.scraped_at || 0).getTime() - new Date(a.scraped_at || 0).getTime());
 
-      userDomains = Array.from(
-        new Set(
-          userNotices.map((n: any) => {
-            try { return new URL(n.source_url).hostname; } catch { return 'Other'; }
-          }).filter(Boolean)
-        )
-      );
-
       userSessions = userHistory.slice(0, 25).map((session) => ({
         id: session.id,
         url: session.url,
@@ -135,6 +127,20 @@ export async function GET(req: Request) {
         contentSections: session.contentSections,
         tables: session.tables
       }));
+
+      const domainSet = new Set<string>();
+      userNotices.forEach((n: any) => {
+        try {
+          const u = n.source_url || n.link;
+          if (u) domainSet.add(new URL(u).hostname);
+        } catch {}
+      });
+      userSessions.forEach((s: any) => {
+        try {
+          if (s.url) domainSet.add(new URL(s.url).hostname);
+        } catch {}
+      });
+      userDomains = Array.from(domainSet).filter(Boolean);
     } catch (err: any) {
       console.error('[API Radar GET] Error fetching user history:', err);
     }
@@ -265,7 +271,22 @@ export async function POST(req: Request) {
           (h.notices || []).forEach(n => {
             if (n.link && !seenLinks.has(n.link)) {
               seenLinks.add(n.link);
-              accumulated.push(n);
+              accumulated.push({
+                ...n,
+                source_url: h.url || n.source_url || customUrl,
+                scraped_at: h.scrapedAt || n.date,
+                raw_html: n.raw_html || h.rawHtml || '',
+                raw_lines: n.raw_lines || h.rawHtmlLines || 0,
+                raw_bytes: n.raw_bytes || h.rawHtmlBytes || 0,
+                open_graph: n.open_graph || h.openGraph || {},
+                meta_tags: n.meta_tags || h.metaTags || {},
+                json_ld: n.json_ld || h.jsonLd || [],
+                waf_info: n.waf_info || h.wafInfo || {},
+                full_markdown: n.full_markdown || h.fullMarkdown || '',
+                content_sections: n.content_sections || h.contentSections || [],
+                session_tables: n.session_tables || h.tables || [],
+                session_stats: h.stats || n.session_stats || {}
+              });
             }
           });
         });
@@ -277,13 +298,17 @@ export async function POST(req: Request) {
       }
     }
 
-    userDomains = Array.from(
-      new Set(
-        userAllNotices.map((n: any) => {
-          try { return new URL(n.source_url || customUrl).hostname; } catch { return 'Other'; }
-        }).filter(Boolean)
-      )
-    );
+    const domainSet = new Set<string>();
+    userAllNotices.forEach((n: any) => {
+      try {
+        const u = n.source_url || n.link || customUrl;
+        if (u) domainSet.add(new URL(u).hostname);
+      } catch {}
+    });
+    try {
+      domainSet.add(new URL(customUrl).hostname);
+    } catch {}
+    userDomains = Array.from(domainSet).filter(Boolean);
 
     return NextResponse.json({
       success: true,
