@@ -3,7 +3,6 @@ import { getAuthUserFromRequest } from '@/lib/auth';
 import { saveUserScrapeSession, getUserScrapeHistory, UserScrapeRecord } from '@/lib/db';
 import { scrapeUrlServerless, ScrapedNotice, ScrapeSessionResult } from '@/lib/serverless-scraper';
 
-// In-memory global store for self-heal logs and runtime state across serverless invocations
 let memoryHealLogs: any[] = [
   {
     id: 'heal-init-001',
@@ -80,7 +79,7 @@ export async function GET(req: Request) {
   if (authUser) {
     // 1. Authenticated User Mode: Fetch exclusively from this user's MongoDB history
     try {
-      const userHistory: UserScrapeRecord[] = await getUserScrapeHistory(authUser.id);
+      const userHistory: UserScrapeRecord[] = await getUserScrapeHistory(authUser.id, authUser.email);
       userHistoryCount = userHistory.length;
 
       const seenLinks = new Set<string>();
@@ -232,6 +231,7 @@ export async function POST(req: Request) {
     let savedRecord = null;
     let userAllNotices: any[] = sessionNotices;
     let userDomains: string[] = [];
+    let userHistoryCount = 0;
 
     if (authUser) {
       // 3. Authenticated User: Save to MongoDB Atlas
@@ -253,11 +253,12 @@ export async function POST(req: Request) {
           fullMarkdown: sessionResult.fullMarkdown || '',
           contentSections: sessionResult.contentSections || [],
           tables: sessionResult.tables || []
-        });
+        }, authUser.email);
         console.log(`[API Radar] 💾 Saved session to MongoDB for user ${authUser.email}`);
 
         // Fetch updated user notices list
-        const updatedHistory = await getUserScrapeHistory(authUser.id);
+        const updatedHistory = await getUserScrapeHistory(authUser.id, authUser.email);
+        userHistoryCount = updatedHistory.length;
         const seenLinks = new Set<string>();
         const accumulated: any[] = [];
         updatedHistory.forEach(h => {
@@ -268,7 +269,9 @@ export async function POST(req: Request) {
             }
           });
         });
-        userAllNotices = accumulated;
+        if (accumulated.length > 0) {
+          userAllNotices = accumulated;
+        }
       } catch (saveErr: any) {
         console.error('[API Radar] Error saving user history record:', saveErr);
       }
@@ -287,6 +290,7 @@ export async function POST(req: Request) {
       isGuest: !authUser,
       savedToHistory: !!savedRecord,
       user: authUser,
+      userHistoryCount,
       message: `Scraped ${sessionNotices.length} items from ${customUrl} (${authUser ? 'Saved to Your Personal History' : 'Instant Guest Mode'})`,
       notices: userAllNotices,
       domains: userDomains,

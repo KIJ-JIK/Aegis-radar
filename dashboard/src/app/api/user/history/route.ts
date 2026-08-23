@@ -12,7 +12,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const history = await getUserScrapeHistory(user.id);
+    const history = await getUserScrapeHistory(user.id, user.email);
     return NextResponse.json({
       success: true,
       history,
@@ -42,7 +42,7 @@ export async function DELETE(req: Request) {
     const recordId = url.searchParams.get('id');
 
     if (clearAll) {
-      await clearUserScrapeHistory(user.id);
+      await clearUserScrapeHistory(user.id, user.email);
       return NextResponse.json({
         success: true,
         message: 'All user scrape history cleared successfully.'
@@ -56,7 +56,7 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const deleted = await deleteUserScrapeSession(user.id, recordId);
+    const deleted = await deleteUserScrapeSession(user.id, recordId, user.email);
     return NextResponse.json({
       success: true,
       deleted,

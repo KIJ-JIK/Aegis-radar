@@ -52,37 +52,28 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Check and store in MongoDB / local DB
-    const existing = await getUserByEmail(normalizedEmail);
-    if (existing && !userId) {
-      return NextResponse.json(
-        { success: false, error: 'An account with this email already exists. Please log in instead.' },
-        { status: 409 }
-      );
-    }
-
     const passwordHash = await hashPassword(password);
-    let user = existing;
-    if (!user) {
-      user = await createUser({
-        id: userId || undefined,
-        name: displayName,
-        email: normalizedEmail,
-        passwordHash
-      });
-    }
+    const existing = await getUserByEmail(normalizedEmail);
+    const resolvedId = userId || existing?.id || undefined;
+
+    const user = await createUser({
+      id: resolvedId,
+      name: displayName,
+      email: normalizedEmail,
+      passwordHash
+    });
 
     const token = signToken({
-      id: user.id || userId,
+      id: user.id,
       name: user.name || displayName,
       email: user.email || normalizedEmail
     });
 
     const response = NextResponse.json({
       success: true,
-      message: 'Account created successfully!',
+      message: 'Account registered and authenticated!',
       user: {
-        id: user.id || userId,
+        id: user.id,
         name: user.name || displayName,
         email: user.email || normalizedEmail
       },

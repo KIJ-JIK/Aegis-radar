@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getUserByEmail } from '@/lib/db';
-import { comparePassword, signToken, AUTH_COOKIE_NAME } from '@/lib/auth';
+import { getUserByEmail, createUser } from '@/lib/db';
+import { comparePassword, hashPassword, signToken, AUTH_COOKIE_NAME } from '@/lib/auth';
 import { getSupabaseServerClient, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function POST(req: Request) {
@@ -19,8 +19,18 @@ export async function POST(req: Request) {
     let authUserId = '';
     let authUserName = '';
 
-    // 1. If Supabase Auth is configured, attempt login via Supabase
-    if (isSupabaseConfigured()) {
+    // 1. First check MongoDB / Local database
+    const dbUser = await getUserByEmail(normalizedEmail);
+    if (dbUser) {
+      const isValid = await comparePassword(password, dbUser.passwordHash);
+      if (isValid) {
+        authUserId = dbUser.id;
+        authUserName = dbUser.name || normalizedEmail.split('@')[0];
+      }
+    }
+
+    // 2. If not matched, try Supabase Auth (and auto-sync to MongoDB)
+    if (!authUserId && isSupabaseConfigured()) {
       try {
         const supabase = await getSupabaseServerClient();
         if (supabase) {
@@ -32,6 +42,15 @@ export async function POST(req: Request) {
           if (!error && data?.user) {
             authUserId = data.user.id;
             authUserName = data.user.user_metadata?.name || data.user.user_metadata?.full_name || normalizedEmail.split('@')[0];
+
+            // Sync user to MongoDB
+            const passwordHash = await hashPassword(password);
+            await createUser({
+              id: authUserId,
+              name: authUserName,
+              email: normalizedEmail,
+              passwordHash
+            });
           }
         }
       } catch (supabaseErr) {
@@ -39,26 +58,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. If Supabase succeeded or fallback to database lookup
     if (!authUserId) {
-      const user = await getUserByEmail(normalizedEmail);
-      if (!user) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid email or password.' },
-          { status: 401 }
-        );
-      }
-
-      const isValid = await comparePassword(password, user.passwordHash);
-      if (!isValid) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid email or password.' },
-          { status: 401 }
-        );
-      }
-
-      authUserId = user.id;
-      authUserName = user.name || normalizedEmail.split('@')[0];
+      return NextResponse.json(
+        { success: false, error: 'Invalid email or password. Please verify your credentials.' },
+        { status: 401 }
+      );
     }
 
     const token = signToken({

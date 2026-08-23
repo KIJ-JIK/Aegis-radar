@@ -131,13 +131,15 @@ export default function AegisDashboard() {
       const data = await res.json();
       if (data.success) {
         setMetrics(data.metrics);
-        setNotices(data.notices || []);
-        setHealLogs(data.healLogs || []);
-        if (data.domains) {
-          setDomains(data.domains);
-        }
         if (data.user) {
           setUser(data.user);
+        }
+        if (data.notices && data.notices.length > 0) {
+          setNotices(data.notices);
+        }
+        setHealLogs(data.healLogs || []);
+        if (data.domains && data.domains.length > 0) {
+          setDomains(data.domains);
         }
         if (data.userHistoryCount !== undefined) {
           setSavedCount(data.userHistoryCount);
@@ -163,6 +165,7 @@ export default function AegisDashboard() {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
       setSavedCount(0);
+      setNotices([]);
       setNotificationMsg('Logged out. Instant Guest Mode is now active.');
       setTimeout(() => setNotificationMsg(null), 4000);
       fetchRadarData();
@@ -193,16 +196,24 @@ export default function AegisDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setNotices(data.notices || []);
-        if (data.domains) setDomains(data.domains);
-        
-        if (data.isGuest) {
-          setNotificationMsg(`⚡ Scraped ${data.latestSession?.noticeCount || 0} notices in Instant Guest Mode!`);
-        } else {
-          setNotificationMsg(`💾 Scraped ${data.latestSession?.noticeCount || 0} notices & saved to your history!`);
+        const count = data.latestSession?.noticeCount || (data.notices?.length || 0);
+        if (data.notices && data.notices.length > 0) {
+          setNotices(data.notices);
+        }
+        if (data.domains && data.domains.length > 0) {
+          setDomains(data.domains);
+        }
+        if (data.userHistoryCount !== undefined) {
+          setSavedCount(data.userHistoryCount);
+        } else if (!data.isGuest) {
           setSavedCount((prev) => prev + 1);
         }
-        fetchRadarData();
+        
+        if (data.isGuest) {
+          setNotificationMsg(`⚡ Scraped ${count} notices in Instant Guest Mode!`);
+        } else {
+          setNotificationMsg(`💾 Scraped ${count} notices & saved to your history!`);
+        }
       } else {
         setNotificationMsg(`Scrape error: ${data.error}`);
       }
