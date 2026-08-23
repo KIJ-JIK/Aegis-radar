@@ -57,6 +57,15 @@ export interface ScrapeSessionResult {
   stats: Record<string, any>;
 }
 
+export function normalizeTargetUrl(inputUrl: string): string {
+  let url = (inputUrl || '').trim();
+  if (!url) return 'https://aws.amazon.com/new/';
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url;
+  }
+  return url;
+}
+
 function detectAntiBotProtection(html: string, statusCode = 200, headers: Record<string, any> = {}) {
   const lowerHtml = (html || '').toLowerCase();
   const serverHeader = (headers['server'] || '').toLowerCase();
@@ -70,8 +79,8 @@ function detectAntiBotProtection(html: string, statusCode = 200, headers: Record
     return {
       detected: true,
       provider: 'AWS WAF Bot Management',
-      reason: 'Target site presented an AWS WAF cryptographic JavaScript token challenge.',
-      recommendation: 'Target blocks direct fetch; extracted available DOM payload.',
+      reason: 'Target site presented an AWS WAF challenge.',
+      recommendation: 'Captured DOM state with available structured metadata.',
       statusCode: statusCode || 202
     };
   }
@@ -84,8 +93,8 @@ function detectAntiBotProtection(html: string, statusCode = 200, headers: Record
     return {
       detected: true,
       provider: 'Cloudflare Turnstile',
-      reason: 'Cloudflare interstitial verification detected.',
-      recommendation: 'Captured Cloudflare clearance shell.',
+      reason: 'Cloudflare verification challenge detected.',
+      recommendation: 'Captured Cloudflare clearance state.',
       statusCode: statusCode || 403
     };
   }
@@ -94,8 +103,8 @@ function detectAntiBotProtection(html: string, statusCode = 200, headers: Record
     return {
       detected: true,
       provider: 'Akamai Bot Manager',
-      reason: 'Akamai Edge sensor challenge triggered.',
-      recommendation: 'Extracted response payload.',
+      reason: 'Akamai Edge sensor detected.',
+      recommendation: 'Extracted available DOM payload.',
       statusCode: statusCode || 403
     };
   }
@@ -112,12 +121,14 @@ function detectAntiBotProtection(html: string, statusCode = 200, headers: Record
 export function fetchLiveHtml(targetUrl: string, redirectCount = 0, cookieJar = ''): Promise<{ html: string; statusCode: number; headers: Record<string, any>; wafInfo: any }> {
   return new Promise((resolve) => {
     try {
+      const sanitizedUrl = normalizeTargetUrl(targetUrl);
+
       if (redirectCount > 5) {
         resolve({ html: '', statusCode: 310, headers: {}, wafInfo: { detected: false, provider: 'Too Many Redirects' } });
         return;
       }
 
-      const parsedUrl = new URL(targetUrl);
+      const parsedUrl = new URL(sanitizedUrl);
       const isHttps = parsedUrl.protocol === 'https:';
       const client = isHttps ? https : http;
 
@@ -137,7 +148,7 @@ export function fetchLiveHtml(targetUrl: string, redirectCount = 0, cookieJar = 
           'Upgrade-Insecure-Requests': '1',
           ...(cookieJar ? { 'Cookie': cookieJar } : {})
         },
-        timeout: 12000
+        timeout: 9000
       };
 
       if (isHttps) {
@@ -156,7 +167,7 @@ export function fetchLiveHtml(targetUrl: string, redirectCount = 0, cookieJar = 
           if (redirectUrl.startsWith('/')) {
             redirectUrl = parsedUrl.origin + redirectUrl;
           } else if (!redirectUrl.startsWith('http')) {
-            try { redirectUrl = new URL(redirectUrl, targetUrl).href; } catch { redirectUrl = targetUrl; }
+            try { redirectUrl = new URL(redirectUrl, sanitizedUrl).href; } catch { redirectUrl = sanitizedUrl; }
           }
           return fetchLiveHtml(redirectUrl, redirectCount + 1, currentCookies).then(resolve);
         }
@@ -210,16 +221,18 @@ function categorizeContent(targetUrl: string, text: string): string {
   const lower = (text || '').toLowerCase();
   const lowerUrl = (targetUrl || '').toLowerCase();
 
-  if (lower.includes('security') || lower.includes('patch') || lower.includes('vulnerability') || lower.includes('cve') || lower.includes('cwe')) return 'Security';
-  if (lower.includes('ai') || lower.includes('llm') || lower.includes('gemini') || lower.includes('gpt') || lower.includes('model') || lower.includes('claude')) return 'Artificial Intelligence';
-  if (lower.includes('compute') || lower.includes('ec2') || lower.includes('server') || lower.includes('cluster') || lower.includes('kubernetes')) return 'Compute';
-  if (lower.includes('storage') || lower.includes('s3') || lower.includes('database') || lower.includes('dynamodb') || lower.includes('sql')) return 'Storage & DB';
-  if (lower.includes('analytics') || lower.includes('data') || lower.includes('redshift') || lower.includes('kinesis')) return 'Analytics';
+  if (lower.includes('security') || lower.includes('patch') || lower.includes('vulnerability') || lower.includes('cve') || lower.includes('cwe') || lower.includes('advisory')) return 'Security';
+  if (lower.includes('ai') || lower.includes('llm') || lower.includes('gemini') || lower.includes('gpt') || lower.includes('model') || lower.includes('claude') || lower.includes('deepseek')) return 'Artificial Intelligence';
+  if (lower.includes('compute') || lower.includes('ec2') || lower.includes('server') || lower.includes('cluster') || lower.includes('kubernetes') || lower.includes('cloud')) return 'Cloud & Infra';
+  if (lower.includes('storage') || lower.includes('s3') || lower.includes('database') || lower.includes('dynamodb') || lower.includes('sql') || lower.includes('mongo')) return 'Storage & DB';
+  if (lower.includes('analytics') || lower.includes('data') || lower.includes('metrics') || lower.includes('graph')) return 'Analytics';
+  if (lower.includes('code') || lower.includes('repo') || lower.includes('commit') || lower.includes('branch') || lower.includes('git') || lower.includes('developer') || lower.includes('build')) return 'Engineering';
   if (lower.includes('fashion') || lower.includes('style') || lower.includes('dress') || lower.includes('wear')) return 'Fashion & Style';
   if (lower.includes('food') || lower.includes('recipe') || lower.includes('dinner') || lower.includes('meal')) return 'Food & Dining';
-  if (lower.includes('art') || lower.includes('design') || lower.includes('decor') || lower.includes('photo')) return 'Design & Art';
-  if (lower.includes('sport') || lower.includes('game') || lower.includes('soccer') || lower.includes('football')) return 'Sports';
-  if (lowerUrl.includes('github') || lowerUrl.includes('advisories')) return 'Advisory';
+  if (lower.includes('art') || lower.includes('design') || lower.includes('decor') || lower.includes('photo') || lower.includes('creative')) return 'Design & Art';
+  if (lower.includes('news') || lower.includes('post') || lower.includes('update') || lower.includes('release')) return 'Announcement';
+  if (lowerUrl.includes('github')) return 'Engineering';
+  if (lowerUrl.includes('youtube')) return 'Media & Video';
   if (lowerUrl.includes('news.ycombinator.com') || lowerUrl.includes('techcrunch')) return 'Tech News';
   if (lowerUrl.includes('pinterest.com')) return 'Discovery';
 
@@ -232,8 +245,9 @@ function formatCleanTitle(text: string): string {
 }
 
 export function extractStructuredDataServerless(html: string, targetUrl: string, wafInfo?: any): ScrapeSessionResult {
+  const sanitizedUrl = normalizeTargetUrl(targetUrl);
   const $ = cheerio.load(html || '');
-  const urlObj = new URL(targetUrl);
+  const urlObj = new URL(sanitizedUrl);
   const origin = urlObj.origin;
   const hostname = urlObj.hostname;
 
@@ -252,28 +266,31 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
       metaTags[name] = content;
       const lowerName = name.toLowerCase().trim();
       if (lowerName.startsWith('og:')) og[lowerName.replace('og:', '')] = content;
+      if (lowerName.startsWith('twitter:')) og[lowerName.replace('twitter:', '')] = content;
     }
   });
 
+  // Parse JSON-LD structured schemas
   $('script[type="application/ld+json"]').each((_, el) => {
     try {
       const text = $(el).text().trim();
       if (text) {
         const parsed = JSON.parse(text);
         if (Array.isArray(parsed)) jsonLd.push(...parsed);
+        else if (parsed['@graph'] && Array.isArray(parsed['@graph'])) jsonLd.push(...parsed['@graph']);
         else jsonLd.push(parsed);
       }
     } catch {}
   });
 
-  const pageTitle = $('title').text().replace(/\s+/g, ' ').trim() || og.title || hostname;
+  const pageTitle = $('title').text().replace(/\s+/g, ' ').trim() || og.title || metaTags['title'] || hostname;
   const metaDescription = og.description || metaTags['description'] || metaTags['Description'] || '';
 
   const resolvedOg = {
     title: og.title || pageTitle,
     description: metaDescription,
     image: og.image || '',
-    url: og.url || targetUrl,
+    url: og.url || sanitizedUrl,
     site_name: og.site_name || hostname,
     ...og
   };
@@ -283,7 +300,7 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": resolvedOg.title,
-      "url": targetUrl,
+      "url": sanitizedUrl,
       "description": resolvedOg.description || `Extracted entity from ${hostname}`
     });
   }
@@ -294,7 +311,7 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
 
   // Full Markdown
   const markdownBlocks: string[] = [];
-  $clean('h1, h2, h3, h4, h5, h6, p, ul, ol, table, blockquote').each((_, el) => {
+  $clean('h1, h2, h3, h4, h5, h6, p, ul, ol, table, blockquote, article').each((_, el) => {
     const tag = el.tagName.toLowerCase();
     const $el = $clean(el);
     const text = $el.text().replace(/\s+/g, ' ').trim();
@@ -377,12 +394,27 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
 
     if (href.startsWith('/')) href = origin + href;
     else if (!href.startsWith('http')) {
-      try { href = new URL(href, targetUrl).href; } catch { href = `${targetUrl}#${text.toLowerCase().replace(/[^a-z0-9]/g, '-')}`; }
+      try { href = new URL(href, sanitizedUrl).href; } catch { href = `${sanitizedUrl}#${text.toLowerCase().replace(/[^a-z0-9]/g, '-')}`; }
     }
 
     if (seenHrefs.has(href)) return;
     seenHrefs.add(href);
     allLinks.push({ text: formatCleanTitle(text), href });
+  });
+
+  // Paragraph & Card Entities (for sites with few headings or dynamic content)
+  const paragraphBlocks: Array<{ title: string; content: string }> = [];
+  $clean('article, [role="article"], .card, .post, .feed-item, p').each((_, el) => {
+    const pText = $clean(el).text().replace(/\s+/g, ' ').trim();
+    if (pText.length > 35 && pText.length < 500) {
+      const pTitle = pText.split(/[.!?:]/)[0].trim();
+      if (pTitle.length >= 5 && pTitle.length <= 120) {
+        paragraphBlocks.push({
+          title: formatCleanTitle(pTitle),
+          content: pText
+        });
+      }
+    }
   });
 
   // Build Structured Notices
@@ -392,14 +424,14 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
 
   // 1. Primary Page Notice
   if (pageTitle) {
-    usedLinks.add(targetUrl);
+    usedLinks.add(sanitizedUrl);
     notices.push({
       title: formatCleanTitle(pageTitle),
-      link: targetUrl,
+      link: sanitizedUrl,
       date: today,
-      category: categorizeContent(targetUrl, pageTitle),
+      category: categorizeContent(sanitizedUrl, pageTitle),
       summary: metaDescription || `Entity summary for ${hostname}`,
-      source_url: targetUrl,
+      source_url: sanitizedUrl,
       reference_id: `SCRAPE-${Buffer.from(pageTitle).toString('base64').substring(0, 10)}`,
       raw_html: html,
       raw_lines: rawHtmlLines,
@@ -417,16 +449,16 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
   // 2. From Section Headings
   contentSections.forEach(sec => {
     if (notices.length >= 60) return;
-    const link = `${targetUrl}#${sec.heading.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 35)}`;
+    const link = `${sanitizedUrl}#${sec.heading.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 35)}`;
     if (!usedLinks.has(link) && sec.heading.length >= 3) {
       usedLinks.add(link);
       notices.push({
         title: sec.heading,
         link,
         date: today,
-        category: categorizeContent(targetUrl, sec.heading),
+        category: categorizeContent(sanitizedUrl, sec.heading),
         summary: sec.content ? sec.content.substring(0, 300) : `Content section from ${hostname}`,
-        source_url: targetUrl,
+        source_url: sanitizedUrl,
         reference_id: `SCRAPE-${Buffer.from(sec.heading).toString('base64').substring(0, 10)}`,
         raw_html: html,
         raw_lines: rawHtmlLines,
@@ -444,7 +476,7 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
     table.rows.forEach(row => {
       if (notices.length >= 60) return;
       const linked = row.find(c => c.link && c.link.startsWith('http'));
-      const link: string = (linked && linked.link) ? linked.link : `${targetUrl}#row-${notices.length}`;
+      const link: string = (linked && linked.link) ? linked.link : `${sanitizedUrl}#row-${notices.length}`;
       if (!usedLinks.has(link)) {
         usedLinks.add(link);
         const title = formatCleanTitle(linked?.text || row.map(c => c.text).filter(t => t.length > 2).join(' — '));
@@ -453,9 +485,9 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
             title,
             link,
             date: today,
-            category: categorizeContent(targetUrl, title),
+            category: categorizeContent(sanitizedUrl, title),
             summary: row.filter(c => c !== linked).map(c => c.text).join(' | ') || `Table record from ${hostname}`,
-            source_url: targetUrl,
+            source_url: sanitizedUrl,
             reference_id: `SCRAPE-${Buffer.from(title).toString('base64').substring(0, 10)}`,
             raw_html: html,
             raw_lines: rawHtmlLines,
@@ -479,9 +511,9 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
         title: l.text,
         link: l.href,
         date: today,
-        category: categorizeContent(targetUrl, l.text),
+        category: categorizeContent(sanitizedUrl, l.text),
         summary: `Public link/resource extracted from ${hostname}`,
-        source_url: targetUrl,
+        source_url: sanitizedUrl,
         reference_id: `SCRAPE-${Buffer.from(l.text).toString('base64').substring(0, 10)}`,
         raw_html: html,
         raw_lines: rawHtmlLines,
@@ -494,8 +526,35 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
     }
   });
 
+  // 5. From Paragraph / Card Blocks (Fallback when link/heading extraction is sparse)
+  if (notices.length < 5) {
+    paragraphBlocks.forEach((pb, idx) => {
+      if (notices.length >= 60) return;
+      const link = `${sanitizedUrl}#section-${idx + 1}`;
+      if (!usedLinks.has(link)) {
+        usedLinks.add(link);
+        notices.push({
+          title: pb.title,
+          link,
+          date: today,
+          category: categorizeContent(sanitizedUrl, pb.title),
+          summary: pb.content.substring(0, 300),
+          source_url: sanitizedUrl,
+          reference_id: `SCRAPE-${Buffer.from(pb.title).toString('base64').substring(0, 10)}`,
+          raw_html: html,
+          raw_lines: rawHtmlLines,
+          raw_bytes: rawHtmlBytes,
+          open_graph: resolvedOg,
+          meta_tags: metaTags,
+          json_ld: jsonLd,
+          waf_info: wafInfo || { detected: false }
+        });
+      }
+    });
+  }
+
   return {
-    url: targetUrl,
+    url: sanitizedUrl,
     scrapedAt: new Date().toISOString(),
     pageTitle,
     metaDescription,
@@ -523,7 +582,7 @@ export function extractStructuredDataServerless(html: string, targetUrl: string,
 }
 
 export async function scrapeUrlServerless(targetUrl: string): Promise<ScrapeSessionResult> {
-  const url = targetUrl || 'https://aws.amazon.com/new/';
-  const fetchRes = await fetchLiveHtml(url);
-  return extractStructuredDataServerless(fetchRes.html, url, fetchRes.wafInfo);
+  const sanitizedUrl = normalizeTargetUrl(targetUrl);
+  const fetchRes = await fetchLiveHtml(sanitizedUrl);
+  return extractStructuredDataServerless(fetchRes.html, sanitizedUrl, fetchRes.wafInfo);
 }
