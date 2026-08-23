@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #030703;
+  --canvas: #020402;
+  --foreground: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-share-tech-mono), 'Share Tech Mono', monospace, sans-serif;
+  --font-mono: var(--font-share-tech-mono), 'Share Tech Mono', ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ==============================================================================
+   HACKER / SCI-FI HUD RADAR THEME STYLES (SHARE TECH MONO FONT)
+   ============================================================================== */
+
+/* Matrix Cyber Grid Background */
+.bg-matrix-grid {
+  background-color: #030703;
+  background-image: 
+    linear-gradient(to right, rgba(34, 197, 94, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-matrix-dense {
+  background-color: #020502;
+  background-image: 
+    linear-gradient(to right, rgba(34, 197, 94, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.09) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Phosphor Glow Utilities */
+.text-glow-green {
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.box-glow-green {
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.15);
+}
+
+/* Terminal Wireframe Borders */
+.border-matrix {
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.border-matrix-bright {
+  border: 1px solid #4ade80;
+}
+
+/* Cyber Highlight Bar */
+.highlight-pill-green {
+  background-color: #a3e635;
+  color: #000000;
+  font-weight: 800;
+}
+
+/* Terminal Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020502;
+  border-left: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 222, 128, 0.6);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+}
+
+* {
+  font-family: var(--font-share-tech-mono), 'Share Tech Mono', monospace !important;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #030703;
+  color: #ffffff;
+  font-family: var(--font-share-tech-mono), 'Share Tech Mono', monospace !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: #22c55e;
+  color: #000000;
 }

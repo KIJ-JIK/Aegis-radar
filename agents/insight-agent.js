@@ -21,7 +21,10 @@ function getStoredState() {
 function updateStoredState(seenIds) {
   ensureStateFile();
   const state = getStoredState();
-  const updatedSet = Array.from(new Set([...state.seenIds, ...seenIds]));
+  // Merge and deduplicate, filtering out empty strings
+  const updatedSet = Array.from(new Set([...state.seenIds, ...seenIds].filter(id => id && id.length > 0)));
+  // Cap at 500 seen IDs to prevent unbounded growth
+  if (updatedSet.length > 500) updatedSet.length = 500;
   fs.writeFileSync(
     STATE_FILE_PATH,
     JSON.stringify({ seenIds: updatedSet, lastRun: new Date().toISOString() }, null, 2)
@@ -29,14 +32,19 @@ function updateStoredState(seenIds) {
 }
 
 /**
- * Diffs incoming scraped dataset against historical state
+ * Diffs incoming scraped dataset against historical state.
+ * Uses LINK as the primary deduplication key (stable across runs),
+ * falling back to title. Never uses reference_id (contains timestamps).
  */
 function findNewNotices(dataset) {
   const state = getStoredState();
   const seenSet = new Set(state.seenIds);
 
   const newItems = dataset.filter((item) => {
-    const id = item.reference_id || item.link || item.title;
+    // Use link as primary key (stable), then title as fallback
+    // NEVER use reference_id — it contains Date.now() timestamps
+    const id = item.link || item.title;
+    if (!id || id.length === 0) return false; // Skip empty/broken records
     return !seenSet.has(id);
   });
 
@@ -58,7 +66,7 @@ async function generateGeminiSummary(newNotices) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.log(`[InsightAgent] ℹ️ GEMINI_API_KEY not found in environment. Using standard formatted text summary.`);
+    console.log(`[InsightAgent] ℹ️ GEMINI_API_KEY not found. Using formatted text summary.`);
     const lines = newNotices.map(
       (n) => `• [${n.category || 'Notice'}] ${n.title} (${n.date || 'Today'}): ${n.link}`
     );
@@ -81,10 +89,10 @@ Format your output with:
 3. Brief call-to-action for users.
 
 Notices Data:
-${JSON.stringify(newNotices, null, 2)}`;
+${JSON.stringify(newNotices.slice(0, 10), null, 2)}`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
     });
 
@@ -119,8 +127,8 @@ async function runInsightAgent(scrapedDataset) {
 
   const insightResult = await generateGeminiSummary(newNotices);
 
-  // Update state with newly seen IDs
-  const newIds = newNotices.map((n) => n.reference_id || n.link || n.title);
+  // Update state with newly seen IDs (using link as stable key)
+  const newIds = newNotices.map((n) => n.link || n.title).filter(id => id && id.length > 0);
   if (newIds.length > 0) {
     updateStoredState(newIds);
   }
@@ -130,7 +138,7 @@ async function runInsightAgent(scrapedDataset) {
 
 if (require.main === module) {
   const sample = [
-    { title: "Test Announcement", link: "https://example.com/test", date: "2026-08-18", category: "General" }
+    { title: "Test Announcement", link: "https://example.com/test", date: "2026-08-22", category: "General" }
   ];
   runInsightAgent(sample);
 }

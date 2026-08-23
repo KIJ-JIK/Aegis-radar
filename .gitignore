@@ -6,6 +6,11 @@ dashboard/node_modules/
 dashboard/.next/
 dashboard/out/
 
+# Local data caches (large files)
+data/scrape-history.json
+data/user_history.json
+data/users.json
+
 # Environment Variables & Secrets (NEVER COMMIT SECRETS)
 .env
 .env.local

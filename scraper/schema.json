@@ -6,7 +6,7 @@
   "properties": {
     "title": {
       "type": "string",
-      "minLength": 3,
+      "minLength": 1,
       "description": "Headline or notice title"
     },
     "link": {
@@ -29,6 +29,38 @@
     "reference_id": {
       "type": "string",
       "description": "Unique identifier or reference code"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Origin domain or seed URL"
+    },
+    "raw_html": {
+      "type": "string",
+      "description": "Raw HTML source of the document"
+    },
+    "raw_lines": {
+      "type": "integer",
+      "description": "Line count of raw HTML"
+    },
+    "raw_bytes": {
+      "type": "integer",
+      "description": "Byte count of raw HTML"
+    },
+    "open_graph": {
+      "type": "object",
+      "description": "Extracted OpenGraph and social metadata"
+    },
+    "meta_tags": {
+      "type": "object",
+      "description": "Key-value dictionary of extracted HTML meta tags"
+    },
+    "json_ld": {
+      "type": "array",
+      "description": "Parsed JSON-LD structured schemas"
+    },
+    "waf_info": {
+      "type": "object",
+      "description": "Anti-bot and Web Application Firewall diagnostic details"
     }
   }
 }

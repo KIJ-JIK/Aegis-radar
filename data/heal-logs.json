@@ -1,12 +1,142 @@
 [
   {
-    "id": "heal_1787054919812",
-    "timestamp": "2026-08-18T12:08:39.812Z",
-    "collectorId": "c_demo_aegis_001",
-    "triggerReason": "Target site layout changed. Broken fields detected: Item #1 missing required fields: [title, link, date, category]. Re-index DOM and extract title, link, date, and category correctly.",
-    "repairStrategy": "Bright Data Scraper Studio AI healed broken CSS selectors (.notice-title -> article h2 a)",
-    "status": "HEALED_APPROVED",
-    "details": "Repaired 4 field mappings. Extracted 100% compliant JSON output.",
+    "id": "heal_1787464014850",
+    "timestamp": "2026-08-23T05:46:54.850Z",
+    "targetUrl": "https://aws.amazon.com/new/",
+    "triggerReason": "Data quality below threshold: 2/2 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]; Item #2 missing required fields: [link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 2,
+      "validNotices": 1,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 100,
+      "validNotices": 100,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 100 valid notices extracted (was 1)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787377233031",
+    "timestamp": "2026-08-22T05:40:33.031Z",
+    "targetUrl": "https://aws.amazon.com/new/",
+    "triggerReason": "Data quality below threshold: 2/2 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]; Item #2 missing required fields: [link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 2,
+      "validNotices": 1,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 100,
+      "validNotices": 100,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 100 valid notices extracted (was 1)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787375252930",
+    "timestamp": "2026-08-22T05:07:32.930Z",
+    "targetUrl": "https://github.com/advisories",
+    "triggerReason": "Data quality below threshold: 2/2 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]; Item #2 missing required fields: [link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 2,
+      "validNotices": 1,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 100,
+      "validNotices": 100,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 100 valid notices extracted (was 1)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787374266678",
+    "timestamp": "2026-08-22T04:51:06.678Z",
+    "targetUrl": "https://github.com/usestrix/strix",
+    "triggerReason": "Data quality below threshold: 1/1 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 1,
+      "validNotices": 0,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 35,
+      "validNotices": 35,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 35 valid notices extracted (was 0)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787374069866",
+    "timestamp": "2026-08-22T04:47:49.866Z",
+    "targetUrl": "https://cetonline.karnataka.gov.in/kea/#section-quicklinks",
+    "triggerReason": "Data quality below threshold: 1/1 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]",
+    "repairStrategy": "Relaxed link extraction (emergency fallback)",
+    "status": "HEALED_PARTIAL",
+    "beforeStats": {
+      "totalNotices": 1,
+      "validNotices": 0,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 15,
+      "validNotices": 15,
+      "invalidNotices": 0
+    },
+    "details": "Emergency extraction found 15 links (reduced quality, basic structure)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787373070105",
+    "timestamp": "2026-08-22T04:31:10.105Z",
+    "targetUrl": "https://github.com/advisories",
+    "triggerReason": "Data quality below threshold: 2/2 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]; Item #2 missing required fields: [link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 2,
+      "validNotices": 1,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 25,
+      "validNotices": 25,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 25 valid notices extracted (was 1)",
+    "autoApproved": true
+  },
+  {
+    "id": "heal_1787372218893",
+    "timestamp": "2026-08-22T04:16:58.893Z",
+    "targetUrl": "https://github.com/advisories",
+    "triggerReason": "Data quality below threshold: 2/2 records invalid. Issues: Item #1 missing required fields: [title, link, date, category]; Item #2 missing required fields: [link, date, category]",
+    "repairStrategy": "Re-scrape with Cheerio (retry)",
+    "status": "HEALED_VERIFIED",
+    "beforeStats": {
+      "totalNotices": 2,
+      "validNotices": 1,
+      "invalidNotices": 1
+    },
+    "afterStats": {
+      "totalNotices": 25,
+      "validNotices": 25,
+      "invalidNotices": 0
+    },
+    "details": "Re-scrape succeeded: 25 valid notices extracted (was 1)",
     "autoApproved": true
   }
 ]
